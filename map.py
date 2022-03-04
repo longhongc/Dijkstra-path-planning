@@ -5,43 +5,96 @@ from utils import *
 from visualize import *
 
 class Node:
-    def __init__(self, pos=(0, 0), parent=None): 
+    def __init__(self, pos=(0, 0), cost=float('inf'), parent=None): 
         self.pos = pos
+        self.cost = cost
         self.parent = parent
-        self.cost = 0
+
+    def __lt__(self, other): 
+        return self.cost < other.cost
+
+    def __gt__(self, other): 
+        return self.cost > other.cost
 
 class Dijkstra: 
-    def __init__(self, init_pos, goal_pos):
-        self.queue = []
+    def __init__(self, start_pos, goal_pos):
+        self.open_list = PriorityQueue()
         # use set for faster checking visited 
-        self.visited = set()
+        self.closed_list = set()
 
-        init_node = Node(state=init_state)
-        self.add_node(init_pos)
+        start_node = Node(start_pos, 0)
+        self.add_node(start_node)
 
-        self.init_pos = init_pos
+        self.start_pos = start_pos
         self.goal_pos = goal_pos
 
     def add_node(self, node): 
+        self.open_list.put((node.cost, node))
+        #self.nodes_cost[node.pos] = node.cost
         pass
 
     def find_child_nodes(self, node): 
+        x, y = node.pos
         action_sets = [(-1, 1), (0, 1), (1, 1),
                        (-1, 0),         (1, 0),
                        (-1,-1), (0,-1), (1,-1)]
-        pass
+
+        childs = []
+        for action in action_sets:
+            child_pos = (x+action[0], y+action[1])
+            if(Map.is_valid(child_pos) and \
+               (not child_pos in self.closed_list) ): 
+                cost = 1 if action[0]==0 or action[1]==0 else 1.4
+                child = Node(pos=child_pos, parent=node, cost=node.cost+cost)
+                childs.append(child)
+
+        return childs
+
+    # after finding the goal, backtrack to find the path
+    def generate_path(self, node):
+        path = []
+        # backtrack
+        while(node.parent != None):
+            path.append(node.pos)
+            node = node.parent
+        path.append(self.start_pos)
+        path.reverse()
+
+        print("Solution steps: ", len(path))
+        return path
 
     def search(self):
-        pass
+        while(self.open_list.qsize() != 0):
+            run_spinning_cursor()
+
+            current = self.open_list.get()
+            ccost, cnode = current
+            if(cnode.pos in self.closed_list):
+                continue
+            self.closed_list.add(cnode.pos)
+
+            # check if arrive goal
+            if(cnode.pos == self.goal_pos):
+                print("Success")
+                return self.generate_path(cnode)
+
+            childs = self.find_child_nodes(cnode)
+            for child in childs:
+                self.add_node(child)
+        else:
+            print("Search fails")
+            sys.exit(1)
 
 class Map:
     #mm
     width = 400 
     height = 250 
     occupancy_grid_map = np.zeros((height+1, width+1))
+    robot_radius = 5
     
     def __init__(self, start, goal):
-        pass
+        self.start = start
+        self.goal = goal
 
     @classmethod
     def form_obstacle_map(self): 
@@ -73,9 +126,7 @@ class Map:
         # circle
         center = (300, 185)
         c_x, c_y = center
-        r = 40
-
-        print(h_line6)
+        c_r = 40
 
         rows, cols = Map.occupancy_grid_map.shape 
         for i in range(0, rows):
@@ -84,39 +135,68 @@ class Map:
                 x = j
                 y = rows - 1 - i
 
-                # boundary
-                if ((b_line1[0] * x + b_line1[1] * y + b_line1[2]) <= 0 or \
-                    (b_line2[0] * x + b_line2[1] * y + b_line2[2]) >= 0 or \
-                    (b_line3[0] * x + b_line3[1] * y + b_line3[2]) >= 0 or \
-                    (b_line4[0] * x + b_line4[1] * y + b_line4[2]) <= 0 ): 
-                    Map.occupancy_grid_map[i, j]=1
+                # boundary with clearance
+                if ((b_line1[0] * x + b_line1[1] * y + b_line1[2]) <=  Map.robot_radius or \
+                    (b_line2[0] * x + b_line2[1] * y + b_line2[2]) >= -Map.robot_radius or \
+                    (b_line3[0] * x + b_line3[1] * y + b_line3[2]) >= -Map.robot_radius or \
+                    (b_line4[0] * x + b_line4[1] * y + b_line4[2]) <=  Map.robot_radius ): 
+                    Map.occupancy_grid_map[i, j]=2
 
-                # frisbee
-                # check outer triangle
-                if ((ot_line1[0] * x + ot_line1[1] * y + ot_line1[2]) >=0 and \
-                    (ot_line2[0] * x + ot_line2[1] * y + ot_line2[2]) <=0 and \
-                    (ot_line3[0] * x + ot_line3[1] * y + ot_line3[2]) >=0 ): 
-                    Map.occupancy_grid_map[i, j]=1
+                    # boundary
+                    if ((b_line1[0] * x + b_line1[1] * y + b_line1[2]) <= 0 or \
+                        (b_line2[0] * x + b_line2[1] * y + b_line2[2]) >= 0 or \
+                        (b_line3[0] * x + b_line3[1] * y + b_line3[2]) >= 0 or \
+                        (b_line4[0] * x + b_line4[1] * y + b_line4[2]) <= 0 ): 
+                        Map.occupancy_grid_map[i, j]=1
 
-                    # check inner triangle
-                    if ((it_line1[0] * x + it_line1[1] * y + it_line1[2]) >=0 and \
-                        (it_line2[0] * x + it_line2[1] * y + it_line2[2]) <=0 and \
-                        (it_line3[0] * x + it_line3[1] * y + it_line3[2]) >=0 ): 
-                        Map.occupancy_grid_map[i, j]=0
+                # frisbee with clearance
+                if ((ot_line1[0] * x + ot_line1[1] * y + ot_line1[2]) >= -Map.robot_radius and \
+                    (ot_line2[0] * x + ot_line2[1] * y + ot_line2[2]) <=  Map.robot_radius and \
+                    (ot_line3[0] * x + ot_line3[1] * y + ot_line3[2]) >= -Map.robot_radius): 
+                    Map.occupancy_grid_map[i, j]=2
 
+                    # frisbee
+                    # check outer triangle 
+                    if ((ot_line1[0] * x + ot_line1[1] * y + ot_line1[2]) >=0 and \
+                        (ot_line2[0] * x + ot_line2[1] * y + ot_line2[2]) <=0 and \
+                        (ot_line3[0] * x + ot_line3[1] * y + ot_line3[2]) >=0 ): 
+                        Map.occupancy_grid_map[i, j]=1
 
-                # hexagon
-                if ((h_line1[0] * x + h_line1[1] * y + h_line1[2]) >= 0 and \
-                    (h_line2[0] * x + h_line2[1] * y + h_line2[2]) >= 0 and \
-                    (h_line3[0] * x + h_line3[1] * y + h_line3[2]) <= 0 and \
-                    (h_line4[0] * x + h_line4[1] * y + h_line4[2]) <= 0 and \
-                    (h_line5[0] * x + h_line5[1] * y + h_line5[2]) <= 0 and \
-                    (h_line6[0] * x + h_line6[1] * y + h_line6[2]) >= 0 ): 
-                    Map.occupancy_grid_map[i, j]=1
+                        # inner triangle fill red
+                        if ((it_line1[0] * x + it_line1[1] * y + it_line1[2]) >= 0 and \
+                            (it_line2[0] * x + it_line2[1] * y + it_line2[2]) <= 0 and \
+                            (it_line3[0] * x + it_line3[1] * y + it_line3[2]) >= 0 ): 
+                            Map.occupancy_grid_map[i, j]=2
+
+                # inner triangle recover white
+                if ((it_line1[0] * x + it_line1[1] * y + it_line1[2]) >= Map.robot_radius and \
+                    (it_line2[0] * x + it_line2[1] * y + it_line2[2]) <= Map.robot_radius*2  and \
+                    (it_line3[0] * x + it_line3[1] * y + it_line3[2]) >= Map.robot_radius ): 
+                    Map.occupancy_grid_map[i, j]=0
+               
+                # hexagon with clearance
+                if ((h_line1[0] * x + h_line1[1] * y + h_line1[2]) >=  -Map.robot_radius and \
+                    (h_line2[0] * x + h_line2[1] * y + h_line2[2]) >=  -Map.robot_radius and \
+                    (h_line3[0] * x + h_line3[1] * y + h_line3[2]) <=  Map.robot_radius  and \
+                    (h_line4[0] * x + h_line4[1] * y + h_line4[2]) <=  Map.robot_radius  and \
+                    (h_line5[0] * x + h_line5[1] * y + h_line5[2]) <=  Map.robot_radius and \
+                    (h_line6[0] * x + h_line6[1] * y + h_line6[2]) >=  -Map.robot_radius ): 
+                    Map.occupancy_grid_map[i, j]=2
+
+                    # hexagon 
+                    if ((h_line1[0] * x + h_line1[1] * y + h_line1[2]) >= 0 and \
+                        (h_line2[0] * x + h_line2[1] * y + h_line2[2]) >= 0 and \
+                        (h_line3[0] * x + h_line3[1] * y + h_line3[2]) <= 0 and \
+                        (h_line4[0] * x + h_line4[1] * y + h_line4[2]) <= 0 and \
+                        (h_line5[0] * x + h_line5[1] * y + h_line5[2]) <= 0 and \
+                        (h_line6[0] * x + h_line6[1] * y + h_line6[2]) >= 0 ): 
+                        Map.occupancy_grid_map[i, j]=1
 
                 # circle
-                if (pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(r, 2): 
-                    Map.occupancy_grid_map[i, j]=1
+                if (pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(c_r+Map.robot_radius, 2): 
+                    Map.occupancy_grid_map[i, j]=2
+                    if (pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(c_r, 2): 
+                        Map.occupancy_grid_map[i, j]=1
 
     @classmethod
     def is_valid(self, pos): 
@@ -127,7 +207,19 @@ class Map:
         return Map.occupancy_grid_map[i, j]==0
 
     def solve(self): 
-        pass
+        graph = Dijkstra(self.start, self.goal)
+        solution = graph.search()
+        for pos in solution: 
+            rows, cols = Map.occupancy_grid_map.shape 
+            c_x, c_y = pos
+            for x in range(c_x-Map.robot_radius, c_x+Map.robot_radius+1): 
+                for y in range(c_y-Map.robot_radius, c_y+Map.robot_radius+1): 
+                    if(pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(Map.robot_radius, 2): 
+                        j = x
+                        i = rows - 1 - y
+                        Map.occupancy_grid_map[i, j]=3
+
+        return solution
 
 def start_simulation(): 
     success = False
@@ -155,7 +247,7 @@ def start_simulation():
             success = False
         if (not Map.is_valid(goal)):
             print("This goal point is not valid.")
-            restart = False
+            success = False
         print("---")
 
     return start, goal
@@ -163,8 +255,12 @@ def start_simulation():
 
 
 if __name__ == "__main__":
-    #start, goal = start_simulation()
-    #my_map = Map(start, goal)
     Map.form_obstacle_map()
+    start, goal = start_simulation()
+    my_map = Map(start, goal)
+    sol = my_map.solve()
     draw_grid_map(Map.occupancy_grid_map)
 
+
+
+ 
