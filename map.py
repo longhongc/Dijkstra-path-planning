@@ -1,5 +1,6 @@
 import numpy as np
 from queue import PriorityQueue
+import argparse
 
 from utils import *
 from visualize import *
@@ -21,6 +22,7 @@ class Dijkstra:
         self.open_list = PriorityQueue()
         # use set for faster checking visited 
         self.closed_list = set()
+        self.closed_list_gui = []
 
         start_node = Node(start_pos, 0)
         self.add_node(start_node)
@@ -30,7 +32,6 @@ class Dijkstra:
 
     def add_node(self, node): 
         self.open_list.put((node.cost, node))
-        #self.nodes_cost[node.pos] = node.cost
         pass
 
     def find_child_nodes(self, node): 
@@ -60,8 +61,9 @@ class Dijkstra:
         path.append(self.start_pos)
         path.reverse()
 
+        print("Searched nodes: ", len(self.closed_list))
         print("Solution steps: ", len(path))
-        return path
+        return self.closed_list_gui, path 
 
     def search(self):
         while(self.open_list.qsize() != 0):
@@ -72,6 +74,7 @@ class Dijkstra:
             if(cnode.pos in self.closed_list):
                 continue
             self.closed_list.add(cnode.pos)
+            self.closed_list_gui.append(cnode.pos)
 
             # check if arrive goal
             if(cnode.pos == self.goal_pos):
@@ -208,18 +211,9 @@ class Map:
 
     def solve(self): 
         graph = Dijkstra(self.start, self.goal)
-        solution = graph.search()
-        for pos in solution: 
-            rows, cols = Map.occupancy_grid_map.shape 
-            c_x, c_y = pos
-            for x in range(c_x-Map.robot_radius, c_x+Map.robot_radius+1): 
-                for y in range(c_y-Map.robot_radius, c_y+Map.robot_radius+1): 
-                    if(pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(Map.robot_radius, 2): 
-                        j = x
-                        i = rows - 1 - y
-                        Map.occupancy_grid_map[i, j]=3
+        process, solution = graph.search()
 
-        return solution
+        return process, solution
 
 def start_simulation(): 
     success = False
@@ -255,11 +249,21 @@ def start_simulation():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--render", help="Render the whole process (This will take a long time)", action="store_true")
+    parser.add_argument("-p", "--print", help="Print out the solution", action="store_true")
+
+    args = parser.parse_args()
     Map.form_obstacle_map()
     start, goal = start_simulation()
     my_map = Map(start, goal)
-    sol = my_map.solve()
-    draw_grid_map(Map.occupancy_grid_map)
+    process, sol = my_map.solve()
+    if args.print:
+        for pos in sol:
+            print(pos)
+ 
+    draw_search(process, sol, Map.occupancy_grid_map, render_process=args.render)
+    #draw_grid_map(Map.occupancy_grid_map)
 
 
 
