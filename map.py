@@ -1,6 +1,8 @@
 import numpy as np
 from queue import PriorityQueue
 
+from utils import *
+
 class Node:
     def __init__(self, pos=(0, 0), parent=None): 
         self.pos = pos
@@ -35,31 +37,62 @@ class Map:
     #mm
     width = 400 
     height = 250 
+    occupancy_grid_map = np.zeros((height+1, width+1))
     
     def __init__(self, start, goal):
         pass
 
     @classmethod
-    def is_obstacle(self, pos): 
-        occupancy_grid_map = np.zeros((Map.width, Map.height))
+    def form_obstacle_map(self): 
+        # boundary
+        b_line1 = create_line((0,0), (0,250))
+        b_line2 = create_line((0,250), (400,250))
+        b_line3 = create_line((400,250), (400,0))
+        b_line4 = create_line((0,0), (400,0))
 
-        # ax+by+d=0
-        def create_line(p1, p2):
-            assert(p1!=p2),"point1 equals to point2, cannot form line"
+        # hexagon
+        edge = np.tan(np.pi/6) * 70 
+        h_line1 = create_line((165, 100 + edge/2), (165, 100 - edge/2))
+        h_line2 = create_line((165, 100 + edge/2), (200, 100 + edge))
+        h_line3 = create_line((200, 100 + edge), (235, 100 + edge/2))
+        h_line4 = create_line((235, 100 + edge/2), (235, 100 - edge/2))
+        h_line5 = create_line((200, 100 - edge), (235, 100 - edge/2))
+        h_line6 = create_line((165, 100 - edge/2), (200, 100 - edge))
 
-            tangent_vector = (p2[0]-p1[0], p2[1]-p1[1])
-            if (tangenet_vector[0]==0):
-                normal_vector = (1,0)
-            elif (tangenet_vector[1]==0): 
-                normal_vector = (0,1)
-            else:
-                normal_vector = (1/(p2[0]-p1[0]), -1/(p2[1]-p1[1]))
-            a, b = normal_vector
-            d = -(a * p1[0] + b * p1[1])
-            return a, b, d
+        print(h_line6)
 
-        #def form_obstacle()
-        return False
+        rows, cols = Map.occupancy_grid_map.shape 
+        for i in range(0, rows):
+            for j in range(0, cols): 
+                # transform from top-left (0,0) to bottom-left (0,0)
+                x = j
+                y = rows - 1 - i
+
+                # boundary
+                if ((b_line1[0] * x + b_line1[1] * y + b_line1[2]) <= 0 or \
+                    (b_line2[0] * x + b_line2[1] * y + b_line2[2]) >= 0 or \
+                    (b_line3[0] * x + b_line3[1] * y + b_line3[2]) >= 0 or \
+                    (b_line4[0] * x + b_line4[1] * y + b_line4[2]) <= 0 ): 
+                    Map.occupancy_grid_map[i, j]=1
+
+                # hexagon
+                if ((h_line1[0] * x + h_line1[1] * y + h_line1[2]) >= 0 and \
+                    (h_line2[0] * x + h_line2[1] * y + h_line2[2]) >= 0 and \
+                    (h_line3[0] * x + h_line3[1] * y + h_line3[2]) <= 0 and \
+                    (h_line4[0] * x + h_line4[1] * y + h_line4[2]) <= 0 and \
+                    (h_line5[0] * x + h_line5[1] * y + h_line5[2]) <= 0 and \
+                    (h_line6[0] * x + h_line6[1] * y + h_line6[2]) >= 0 ): 
+                    Map.occupancy_grid_map[i, j]=1
+
+
+
+    @classmethod
+    def is_valid(self, pos): 
+        rows, cols = Map.occupancy_grid_map.shape 
+        x, y = pos
+        j = x
+        i = rows - 1 - y
+        return Map.occupancy_grid_map[i, j]==0
 
     def solve(self): 
         pass
@@ -85,40 +118,22 @@ def start_simulation():
 
         success = True
 
-        if (Map.is_obstacle(start)):
+        if (not Map.is_valid(start)):
             print("This start point is not valid.")
             success = False
-        if (Map.is_obstacle(goal)):
+        if (not Map.is_valid(goal)):
             print("This goal point is not valid.")
             restart = False
         print("---")
 
     return start, goal
 
-# ax+by+d=0
-def create_line(p1, p2):
-    assert(p1!=p2),"point1 equals to point2, cannot form line"
 
-    tangent_vector = (p2[0]-p1[0], p2[1]-p1[1])
-    if (tangent_vector[0]==0):
-        normal_vector = (1,0)
-    elif (tangent_vector[1]==0): 
-        normal_vector = (0,1)
-    else:
-        normal_vector = (1/(p2[0]-p1[0]), -1/(p2[1]-p1[1]))
-    a, b = normal_vector
-    d = -(a * p1[0] + b * p1[1])
-    return a, b, d
 
 if __name__ == "__main__":
-    start, goal = start_simulation()
-    my_map = Map(start, goal)
-    a, b, d = create_line(start, goal)
-    print(a)
-    print(b)
-    print(d)
-    print(a*start[0]+b*start[1]+d)
-    print(a*goal[0]+b*goal[1]+d)
-
+    #start, goal = start_simulation()
+    #my_map = Map(start, goal)
+    Map.form_obstacle_map()
+    print(Map.occupancy_grid_map[115,:])
 
 
