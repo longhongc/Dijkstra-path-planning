@@ -51,6 +51,16 @@ class Map:
         b_line3 = create_line((400,250), (400,0))
         b_line4 = create_line((0,0), (400,0))
 
+        # frisbee
+        # outer triangle
+        ot_line1 = create_line((35, 185), (115, 210))
+        ot_line2 = create_line((105, 100), (115, 210))
+        ot_line3 = create_line((35, 185), (105, 100))
+        # inner triangle
+        it_line1 = create_line((80, 185), (115, 210))
+        it_line2 = create_line((105, 100), (115, 210))
+        it_line3 = create_line((80, 185), (105, 100))
+
         # hexagon
         edge = np.tan(np.pi/6) * 70 
         h_line1 = create_line((165, 100 + edge/2), (165, 100 - edge/2))
@@ -80,6 +90,20 @@ class Map:
                     (b_line3[0] * x + b_line3[1] * y + b_line3[2]) >= 0 or \
                     (b_line4[0] * x + b_line4[1] * y + b_line4[2]) <= 0 ): 
                     Map.occupancy_grid_map[i, j]=1
+
+                # frisbee
+                # check outer triangle
+                if ((ot_line1[0] * x + ot_line1[1] * y + ot_line1[2]) >=0 and \
+                    (ot_line2[0] * x + ot_line2[1] * y + ot_line2[2]) <=0 and \
+                    (ot_line3[0] * x + ot_line3[1] * y + ot_line3[2]) >=0 ): 
+                    Map.occupancy_grid_map[i, j]=1
+
+                    # check inner triangle
+                    if ((it_line1[0] * x + it_line1[1] * y + it_line1[2]) >=0 and \
+                        (it_line2[0] * x + it_line2[1] * y + it_line2[2]) <=0 and \
+                        (it_line3[0] * x + it_line3[1] * y + it_line3[2]) >=0 ): 
+                        Map.occupancy_grid_map[i, j]=0
+
 
                 # hexagon
                 if ((h_line1[0] * x + h_line1[1] * y + h_line1[2]) >= 0 and \
@@ -142,6 +166,5 @@ if __name__ == "__main__":
     #start, goal = start_simulation()
     #my_map = Map(start, goal)
     Map.form_obstacle_map()
-    print(Map.occupancy_grid_map[65,:])
     draw_grid_map(Map.occupancy_grid_map)
 
