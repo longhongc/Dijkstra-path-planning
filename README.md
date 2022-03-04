@@ -27,3 +27,14 @@ python3 Dijkstra-pathplanning-Chang-Hong-Chen.py -r -p
 ```
 **-r**: Render the searching process (takes a long time)   
 **-p**: Print out the trajectory  
+
+## Result
+This video is speed up by 10x because of the slow rendering process.
+![dijkstra](./pictures/dijkstra_10x.gif)  
+```
+black: obstacle
+red: robot size margin (5mm)
+white: empty
+blue: robot trajectory
+green: goal
+```
