@@ -15,7 +15,7 @@ def draw_grid_map(grid_map):
     #big_grid_map =  cv2.resize(grid_map, (1600, 1000))
     #cv2.imshow("Map", big_grid_map)
     cv2.imshow("Map", color_map)
-    cv2.waitKey(10)
+    cv2.waitKey(1)
     #cv2.waitKey(0)
 
 def draw_search(process, solution, grid_map, render_process=False): 
