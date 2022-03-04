@@ -4,6 +4,7 @@ import argparse
 
 from utils import *
 from visualize import *
+import setting
 
 class Node:
     def __init__(self, pos=(0, 0), cost=float('inf'), parent=None): 
@@ -93,7 +94,7 @@ class Map:
     width = 400 
     height = 250 
     occupancy_grid_map = np.zeros((height+1, width+1))
-    robot_radius = 5
+    robot_radius = setting.robot_radius
     
     def __init__(self, start, goal):
         self.start = start
@@ -220,7 +221,7 @@ def start_simulation():
     while (not success):
         # read input
         print("map width: 400, map height: 250")
-        print("The robot is a circle with radius 5")
+        print("The robot is a circle with radius ", setting.robot_radius)
         print("Enter a start and goal point in the map")
 
         start_x = int(input("Start x:"))

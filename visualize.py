@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 
+from setting import robot_radius
+
 def draw_grid_map(grid_map):
     rows, cols = grid_map.shape
     color_map = np.zeros((rows, cols, 3))
@@ -29,9 +31,9 @@ def draw_search(process, solution, grid_map, render_process=False):
 
     for pos in solution: 
         c_x, c_y = pos
-        for x in range(c_x-5, c_x+5+1): 
-            for y in range(c_y-5, c_y+5+1): 
-                if(pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(5, 2): 
+        for x in range(c_x-robot_radius, c_x+robot_radius+1): 
+            for y in range(c_y-robot_radius, c_y+robot_radius+1): 
+                if(pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(robot_radius, 2): 
                     j = x
                     i = rows - 1 - y
                     grid_map[i, j]=4
