@@ -21,11 +21,24 @@ def draw_grid_map(grid_map):
     # robot final trajectory
     color_map[np.where(grid_map == 4)] = np.array([255, 145, 0])  
 
+    #goal
+    color_map[np.where(grid_map == 5)] = np.array([0, 255, 0])  
+
     cv2.imshow("Map", color_map)
     cv2.waitKey(1)
 
-def draw_search(process, solution, grid_map, render_process=False): 
+def draw_search(goal, process, solution, grid_map, render_process=False): 
+    # draw goal
     rows, cols = grid_map.shape
+    c_x, c_y = goal
+    for x in range(c_x-robot_radius-2, c_x+robot_radius-2+1): 
+        for y in range(c_y-robot_radius-2, c_y+robot_radius-2+1): 
+            if(pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(robot_radius-2, 2): 
+                j = x
+                i = rows - 1 - y
+                grid_map[i, j]=5
+
+    # draw search process
     if render_process:
         process_map = grid_map.copy()
         for step in process:  
@@ -36,6 +49,7 @@ def draw_search(process, solution, grid_map, render_process=False):
             process_map[i, j] = 3
             draw_grid_map(process_map)
 
+    # draw solution trajectory
     for pos in solution: 
         c_x, c_y = pos
         # add robot collision size

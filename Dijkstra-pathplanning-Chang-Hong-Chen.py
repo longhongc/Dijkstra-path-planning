@@ -269,7 +269,7 @@ if __name__ == "__main__":
         for pos in sol:
             print(pos)
  
-    draw_search(process, sol, Map.occupancy_grid_map, render_process=args.render)
+    draw_search(goal, process, sol, Map.occupancy_grid_map, render_process=args.render)
 
 
 
