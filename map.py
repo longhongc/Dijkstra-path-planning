@@ -2,6 +2,7 @@ import numpy as np
 from queue import PriorityQueue
 
 from utils import *
+from visualize import *
 
 class Node:
     def __init__(self, pos=(0, 0), parent=None): 
@@ -59,6 +60,11 @@ class Map:
         h_line5 = create_line((200, 100 - edge), (235, 100 - edge/2))
         h_line6 = create_line((165, 100 - edge/2), (200, 100 - edge))
 
+        # circle
+        center = (300, 185)
+        c_x, c_y = center
+        r = 40
+
         print(h_line6)
 
         rows, cols = Map.occupancy_grid_map.shape 
@@ -84,7 +90,9 @@ class Map:
                     (h_line6[0] * x + h_line6[1] * y + h_line6[2]) >= 0 ): 
                     Map.occupancy_grid_map[i, j]=1
 
-
+                # circle
+                if (pow((x-c_x), 2) + pow((y-c_y), 2)) <= pow(r, 2): 
+                    Map.occupancy_grid_map[i, j]=1
 
     @classmethod
     def is_valid(self, pos): 
@@ -134,6 +142,6 @@ if __name__ == "__main__":
     #start, goal = start_simulation()
     #my_map = Map(start, goal)
     Map.form_obstacle_map()
-    print(Map.occupancy_grid_map[115,:])
-
+    print(Map.occupancy_grid_map[65,:])
+    draw_grid_map(Map.occupancy_grid_map)
 
