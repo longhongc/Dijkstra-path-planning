@@ -23,6 +23,7 @@ class Dijkstra:
         self.open_list = PriorityQueue()
         # use set for faster checking visited 
         self.closed_list = set()
+        # This is for rendering the process
         self.closed_list_gui = []
 
         start_node = Node(start_pos, 0)
@@ -37,6 +38,7 @@ class Dijkstra:
 
     def find_child_nodes(self, node): 
         x, y = node.pos
+        # 8 actions
         action_sets = [(-1, 1), (0, 1), (1, 1),
                        (-1, 0),         (1, 0),
                        (-1,-1), (0,-1), (1,-1)]
@@ -46,6 +48,7 @@ class Dijkstra:
             child_pos = (x+action[0], y+action[1])
             if(Map.is_valid(child_pos) and \
                (not child_pos in self.closed_list) ): 
+                # diagonal is 1.4
                 cost = 1 if action[0]==0 or action[1]==0 else 1.4
                 child = Node(pos=child_pos, parent=node, cost=node.cost+cost)
                 childs.append(child)
@@ -72,6 +75,9 @@ class Dijkstra:
 
             current = self.open_list.get()
             ccost, cnode = current
+            # Dijkstra needs to update the cost in openlist (time costly)
+            # Use this trick to save time
+            # Don't update, and if current node is in closed list remove and continue
             if(cnode.pos in self.closed_list):
                 continue
             self.closed_list.add(cnode.pos)
@@ -264,7 +270,6 @@ if __name__ == "__main__":
             print(pos)
  
     draw_search(process, sol, Map.occupancy_grid_map, render_process=args.render)
-    #draw_grid_map(Map.occupancy_grid_map)
 
 
 
